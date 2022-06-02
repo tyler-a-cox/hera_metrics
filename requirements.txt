@@ -1,0 +1,5 @@
+tqdm
+scipy
+numpy
+git+https://github.com/HERA-Team/hera_filters
+jax
