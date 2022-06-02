@@ -273,7 +273,10 @@ def flag_data(
             robust=False,
             **basis_options,
         )
-        res = np.nanmedian(np.abs(model - data), axis=0, keepdims=True)
+        res = np.abs(model - data) * model_wgts
+        noise = np.median(res, axis=1, keepdims=True)
+        res = res / noise
+        res = np.nanmedian(res, axis=0, keepdims=True)
 
         # First pass filtering
         model = solve_model(
