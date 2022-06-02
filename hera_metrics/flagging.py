@@ -3,8 +3,13 @@ File for filtering radio frequency interference
 """
 
 import numpy as np
-from hera_filters import dspec
 from scipy import optimize
+from hera_filters import dspec
+
+import jax
+from jax import numpy as jnp
+from jax.config import config
+config.update("jax_enable_x64", True)
 
 DPSS_DEFAULTS_1D = {
     "suppression_factors": [1e-9],
