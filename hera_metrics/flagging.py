@@ -11,55 +11,6 @@ from jax import numpy as jnp
 from jax.config import config
 config.update("jax_enable_x64", True)
 
-DPSS_DEFAULTS_1D = {
-    "suppression_factors": [1e-9],
-    "eigenval_cutoff": [1e-12],
-    "max_contiguous_edge_flags": 10,
-}
-DFT_DEFAULTS_1D = {
-    "suppression_factors": [1e-9],
-    "fundamental_period": np.nan,
-    "max_contiguous_edge_flags": 10,
-}
-
-basis_defaults = {"DPSS": DPSS_DEFAULTS_1D, "DFT": DFT_DEFAULTS_1D}
-
-flag_estimation_algorithms = {
-    "derivative": _derivative,
-    "rewlse": _robust_least_squares,
-    "least_squares": _least_squares,
-}
-
-def estimate_solution_matrix(data, filter_center, filter_half_width, basis='dpss', basis_options=None):
-    """
-    """
-    def _least_median_squares(sol_mat):
-        """
-        """
-        return np.median(np.abs(y - X @ sol_mat))
-
-    X, _ = hera_filters.dspec.dpss_operator()
-    x0 = X.T @ y
-    solution = optimize.minimize(_least_median_squares, x0)
-    return solution
-
-def _least_squares():
-    """
-    """
-    pass
-
-
-def _robust_least_squares():
-    """
-    """
-    pass
-
-
-def _derivative():
-    """
-    """
-    pass
-
 
 def load_data(uvdata):
     """
