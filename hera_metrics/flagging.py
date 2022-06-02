@@ -3,6 +3,7 @@ File for filtering radio frequency interference
 """
 
 import numpy as np
+from scipy import stats
 from scipy import optimize
 from hera_filters import dspec
 
