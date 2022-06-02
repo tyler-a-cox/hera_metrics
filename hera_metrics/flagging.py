@@ -25,7 +25,7 @@ DFT_DEFAULTS_1D = {
 basis_defaults = {"DPSS": DPSS_DEFAULTS_1D, "DFT": DFT_DEFAULTS_1D}
 
 flag_estimation_algorithms = {
-    "derivative": derivative,
+    "derivative": _derivative,
     "rewlse": _robust_least_squares,
     "least_squares": _least_squares,
 }
