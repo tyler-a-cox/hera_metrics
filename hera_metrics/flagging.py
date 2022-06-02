@@ -273,10 +273,7 @@ def flag_data(
             robust=False,
             **basis_options,
         )
-        res = np.mean(np.abs(model - data), axis=0)
-
-        # Make 2D to work on modeling functions
-        res = res.reshape(1, -1)
+        res = np.nanmedian(np.abs(model - data), axis=0, keepdims=True)
 
         # First pass filtering
         model = solve_model(
