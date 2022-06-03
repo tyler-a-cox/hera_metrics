@@ -261,9 +261,9 @@ def flag_data(
         )
         outliers = identify_outliers(data, model, nsig=wide_nsig)
         new_wgts = combine_weights(outliers)
-        model_wgts = model_wgts.astype(bool)
-        model_wgts |= new_wgts.astype(bool)
-        model_wgts = model_wgts.astype(float)
+        model_wgts = (~model_wgts.astype(bool))
+        model_wgts |= (~new_wgts.astype(bool))
+        model_wgts = (~model_wgts).astype(float)
 
     if incoherent_average:
         # Compute final model
