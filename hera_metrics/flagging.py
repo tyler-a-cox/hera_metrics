@@ -259,8 +259,11 @@ def flag_data(
             robust=robust_second_pass,
             **basis_options,
         )
-        model_wgts = identify_outliers(data, model, nsig=wide_nsig)
-        model_wgts = combine_weights(model_wgts)
+        outliers = identify_outliers(data, model, nsig=wide_nsig)
+        new_wgts = combine_weights(outliers)
+        model_wgts = model_wgts.astype(bool)
+        model_wgts |= new_wgts.astype(bool)
+        model_wgts = model_wgts.astype(float)
 
     if incoherent_average:
         # Compute final model
