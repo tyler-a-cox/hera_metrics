@@ -241,26 +241,26 @@ def flag_data(
         Whether or not to robustly flag after the first step
     """
     filter_center = [0]
-
+    filter_half_widths = np.linspace(1 / narrow_filter_width[0], 1 / wide_filter_width[0], niter)
     # First pass filtering
     model = solve_model(
-        freqs, data, filter_center, narrow_filter_width, robust=True, **basis_options
+        freqs, data, filter_center, [1 / filter_half_widths[0]], robust=True, **basis_options
     )
     model_wgts = identify_outliers(data, model, nsig=narrow_nsig)
     model_wgts = combine_weights(model_wgts)
 
-    # Second Pass
-    model = solve_model(
-        freqs,
-        data,
-        filter_center,
-        wide_filter_width,
-        wgts=model_wgts,
-        robust=robust_second_pass,
-        **basis_options,
-    )
-    model_wgts = identify_outliers(data, model, nsig=wide_nsig)
-    model_wgts = combine_weights(model_wgts)
+    for ni in range(1, niter):
+        model = solve_model(
+            freqs,
+            data,
+            filter_center,
+            [1 / filter_half_widths[ni]],
+            wgts=model_wgts,
+            robust=robust_second_pass,
+            **basis_options,
+        )
+        model_wgts = identify_outliers(data, model, nsig=wide_nsig)
+        model_wgts = combine_weights(model_wgts)
 
     if incoherent_average:
         # Compute final model
