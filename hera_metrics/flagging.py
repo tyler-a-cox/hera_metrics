@@ -285,8 +285,11 @@ def flag_data(
         model = solve_model(
             freqs, res, filter_center, narrow_filter_width, robust=True, **basis_options
         )
-        model_wgts = identify_outliers(res, model, nsig=6)
-        model_wgts = combine_weights(model_wgts)
+        outliers = identify_outliers(res, model, nsig=6)
+        new_wgts = combine_weights(outliers)
+        model_wgts = (~model_wgts.astype(bool))
+        model_wgts |= (~new_wgts.astype(bool))
+        model_wgts = (~model_wgts).astype(float)
 
         # Second Pass
         model = solve_model(
@@ -298,8 +301,11 @@ def flag_data(
             robust=robust_second_pass,
             **basis_options,
         )
-        model_wgts = identify_outliers(res, model, nsig=6)
-        model_wgts = combine_weights(model_wgts)
+        outliers = identify_outliers(res, model, nsig=6)
+        new_wgts = combine_weights(outliers)
+        model_wgts = (~model_wgts.astype(bool))
+        model_wgts |= (~new_wgts.astype(bool))
+        model_wgts = (~model_wgts).astype(float)
 
     model = solve_model(
         freqs,
