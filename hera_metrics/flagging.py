@@ -291,21 +291,21 @@ def flag_data(
         model_wgts |= (~new_wgts.astype(bool))
         model_wgts = (~model_wgts).astype(float)
 
-        # Second Pass
-        model = solve_model(
-            freqs,
-            res,
-            filter_center,
-            wide_filter_width,
-            wgts=model_wgts,
-            robust=robust_second_pass,
-            **basis_options,
-        )
-        outliers = identify_outliers(res, model, nsig=6)
-        new_wgts = combine_weights(outliers)
-        model_wgts = (~model_wgts.astype(bool))
-        model_wgts |= (~new_wgts.astype(bool))
-        model_wgts = (~model_wgts).astype(float)
+        for ni in range(1, niter):
+            model = solve_model(
+                freqs,
+                res,
+                filter_center,
+                [1 / filter_half_widths[ni]],
+                wgts=model_wgts,
+                robust=robust_second_pass,
+                **basis_options,
+            )
+            outliers = identify_outliers(data, model, nsig=wide_nsig)
+            new_wgts = combine_weights(outliers)
+            model_wgts = (~model_wgts.astype(bool))
+            model_wgts |= (~new_wgts.astype(bool))
+            model_wgts = (~model_wgts).astype(float)
 
     model = solve_model(
         freqs,
