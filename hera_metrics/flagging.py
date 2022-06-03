@@ -270,14 +270,7 @@ def flag_data(
         freqs, data, filter_center, [1 / filter_half_widths[0]], robust=True, update_weights=update_weights, **basis_options
     )
     outliers = identify_outliers(data, model, nsig=wide_nsig)
-
-    if update_weights:
-        new_wgts = combine_weights(outliers, threshold=combine_weights_threshold)
-        model_wgts = (~model_wgts.astype(bool))
-        model_wgts |= (~new_wgts.astype(bool))
-        model_wgts = (~model_wgts).astype(float)
-    else:
-        model_wgts = combine_weights(outliers)
+    model_wgts = combine_weights(outliers)
 
     for ni in range(1, niter):
         model = solve_model(
@@ -298,7 +291,7 @@ def flag_data(
             model_wgts |= (~new_wgts.astype(bool))
             model_wgts = (~model_wgts).astype(float)
         else:
-            model_wgts = combine_weights(outliers)
+            model_wgts = combine_weights(outliers, threshold=combine_weights_threshold)
 
     if incoherent_average:
         # Compute f model
@@ -351,7 +344,7 @@ def flag_data(
                 model_wgts = (~model_wgts).astype(float)
 
             else:
-                model_wgts = combine_weights(outliers)
+                model_wgts = combine_weights(outliers, threshold=combine_weights_threshold)
 
     model = solve_model(
         freqs,
