@@ -43,6 +43,7 @@ def solve_model(
     distribution="normal",
     combine_wgts_method="mean",
     nsig=2.5,
+    update_weights=True,
     **basis_options,
 ):
     """
@@ -73,6 +74,9 @@ def solve_model(
         Method used to solve for model components
     combine_wgts_method: str, default='mean'
         Method used to combine weights array
+    update_weights: bool, default=True
+        If weights are provided and robust method is True, provided weights will be
+        updated.
 
     Returns:
     -------
@@ -133,13 +137,22 @@ def solve_model(
         model_wgts = np.where(np.abs(res) <= t[:, None], 1, 0)
         model_wgts = combine_weights(model_wgts, method=combine_wgts_method)
 
+        # Combine with previous weights if previous weights given
+        if wgts is not None and update_weights:
+            wgts = (~wgts.astype(bool))
+            wgts |= (~model_wgts.astype(bool))
+            wgts = (~wgts).astype(float)
+
+        else:
+            wgts = model_wgts
+
         # Compute model using model weights
         model = solve_model(
             freqs,
             data,
             filter_centers,
             filter_half_widths,
-            wgts=model_wgts,
+            wgts=wgts,
             robust=False,
             basis=basis,
             method=method,
@@ -181,7 +194,7 @@ def identify_outliers(data, model, nsig=5, noise_model=None):
     return wgts
 
 
-def combine_weights(wgts, axis=0, method="mean", threshold=0.8):
+def combine_weights(wgts, axis=0, method="mean", threshold=0.9):
     """
     Parameters:
     ----------
@@ -216,7 +229,8 @@ def flag_data(
     estimate_noise=False,
     niter=2,
     robust_second_pass=False,
-    final_flagging=True,
+    update_weights=True,
+    combine_weights_threshold=0.8,
     **basis_options,
 ):
     """
@@ -239,15 +253,31 @@ def flag_data(
         Number of iterations to attempt to remove RFI. Future parameter that may or may not be used
     robust_second_pass: bool, default=False,
         Whether or not to robustly flag after the first step
+    update_weights: bool, default=False
+        Update weights after each iteration. Otherwise, replace weights with new iteration
+
+    Returns:
+    -------
+    model: np.ndarray
+        Model of the data
+    model_wgts: np.ndarray
+        Weights applied to data
     """
     filter_center = [0]
     filter_half_widths = np.linspace(1 / narrow_filter_width[0], 1 / wide_filter_width[0], niter)
     # First pass filtering
     model = solve_model(
-        freqs, data, filter_center, [1 / filter_half_widths[0]], robust=True, **basis_options
+        freqs, data, filter_center, [1 / filter_half_widths[0]], robust=True, update_weights=update_weights, **basis_options
     )
-    model_wgts = identify_outliers(data, model, nsig=narrow_nsig)
-    model_wgts = combine_weights(model_wgts)
+    outliers = identify_outliers(data, model, nsig=wide_nsig)
+
+    if update_weights:
+        new_wgts = combine_weights(outliers, threshold=combine_weights_threshold)
+        model_wgts = (~model_wgts.astype(bool))
+        model_wgts |= (~new_wgts.astype(bool))
+        model_wgts = (~model_wgts).astype(float)
+    else:
+        model_wgts = combine_weights(outliers)
 
     for ni in range(1, niter):
         model = solve_model(
@@ -257,18 +287,21 @@ def flag_data(
             [1 / filter_half_widths[ni]],
             wgts=model_wgts,
             robust=robust_second_pass,
+            update_weights=update_weights,
             **basis_options,
         )
-        outliers = identify_outliers(data, model, nsig=6)
-        model_wgts = combine_weights(outliers)
-        #outliers = identify_outliers(data, model, nsig=wide_nsig)
-        #new_wgts = combine_weights(outliers)
-        #model_wgts = (~model_wgts.astype(bool))
-        #model_wgts |= (~new_wgts.astype(bool))
-        #model_wgts = (~model_wgts).astype(float)
+        outliers = identify_outliers(data, model, nsig=wide_nsig)
+
+        if update_weights:
+            new_wgts = combine_weights(outliers, threshold=combine_weights_threshold)
+            model_wgts = (~model_wgts.astype(bool))
+            model_wgts |= (~new_wgts.astype(bool))
+            model_wgts = (~model_wgts).astype(float)
+        else:
+            model_wgts = combine_weights(outliers)
 
     if incoherent_average:
-        # Compute final model
+        # Compute f model
         model = solve_model(
             freqs,
             data,
@@ -276,6 +309,7 @@ def flag_data(
             wide_filter_width,
             wgts=model_wgts,
             robust=False,
+            update_weights=update_weights,
             **basis_options,
         )
         res = np.abs(model - data) * model_wgts
@@ -287,12 +321,15 @@ def flag_data(
         model = solve_model(
             freqs, res, filter_center, narrow_filter_width, robust=True, **basis_options
         )
-        outliers = identify_outliers(res, model, nsig=6)
-        model_wgts = combine_weights(outliers)
-        #new_wgts = combine_weights(outliers)
-        #model_wgts = (~model_wgts.astype(bool))
-        #model_wgts |= (~new_wgts.astype(bool))
-        #model_wgts = (~model_wgts).astype(float)
+        outliers = identify_outliers(res, model, nsig=wide_nsig)
+
+        if update_weights:
+            new_wgts = combine_weights(outliers, threshold=combine_weights_threshold)
+            model_wgts = (~model_wgts.astype(bool))
+            model_wgts |= (~new_wgts.astype(bool))
+            model_wgts = (~model_wgts).astype(float)
+        else:
+            model_wgts = combine_weights(outliers, threshold=combine_weights_threshold)
 
         for ni in range(1, niter):
             model = solve_model(
@@ -302,15 +339,19 @@ def flag_data(
                 [1 / filter_half_widths[ni]],
                 wgts=model_wgts,
                 robust=robust_second_pass,
+                update_weights=update_weights,
                 **basis_options,
             )
-            outliers = identify_outliers(res, model, nsig=6)
-            model_wgts = combine_weights(outliers)
-            #outliers = identify_outliers(res, model, nsig=wide_nsig)
-            #new_wgts = combine_weights(outliers)
-            #model_wgts = (~model_wgts.astype(bool))
-            #model_wgts |= (~new_wgts.astype(bool))
-            #model_wgts = (~model_wgts).astype(float)
+            outliers = identify_outliers(res, model, nsig=narrow_nsig)
+
+            if update_weights:
+                new_wgts = combine_weights(outliers, threshold=combine_weights_threshold)
+                model_wgts = (~model_wgts.astype(bool))
+                model_wgts |= (~new_wgts.astype(bool))
+                model_wgts = (~model_wgts).astype(float)
+
+            else:
+                model_wgts = combine_weights(outliers)
 
     model = solve_model(
         freqs,
@@ -319,6 +360,7 @@ def flag_data(
         wide_filter_width,
         wgts=model_wgts,
         robust=False,
+        update_weights=update_weights,
         **basis_options,
     )
     return model, model_wgts
