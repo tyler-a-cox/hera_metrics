@@ -259,7 +259,7 @@ def flag_data(
             robust=robust_second_pass,
             **basis_options,
         )
-        outliers = identify_outliers(res, model, nsig=6)
+        outliers = identify_outliers(data, model, nsig=6)
         model_wgts = combine_weights(outliers)
         #outliers = identify_outliers(data, model, nsig=wide_nsig)
         #new_wgts = combine_weights(outliers)
