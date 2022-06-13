@@ -4,13 +4,19 @@ File for filtering radio frequency interference
 
 import numpy as np
 from scipy import stats
-from scipy import optimize
 from hera_filters import dspec
-
-import jax
 from jax import numpy as jnp
 from jax.config import config
+
 config.update("jax_enable_x64", True)
+
+
+def additional_function(**kwargs):
+    """
+    Here's a docstring
+
+    """
+    pass
 
 
 def load_data(uvdata):
@@ -139,8 +145,8 @@ def solve_model(
 
         # Combine with previous weights if previous weights given
         if wgts is not None and update_weights:
-            wgts = (~wgts.astype(bool))
-            wgts |= (~model_wgts.astype(bool))
+            wgts = ~wgts.astype(bool)
+            wgts |= ~model_wgts.astype(bool)
             wgts = (~wgts).astype(float)
 
         else:
@@ -264,10 +270,18 @@ def flag_data(
         Weights applied to data
     """
     filter_center = [0]
-    filter_half_widths = np.linspace(1 / narrow_filter_width[0], 1 / wide_filter_width[0], niter)
+    filter_half_widths = np.linspace(
+        1 / narrow_filter_width[0], 1 / wide_filter_width[0], niter
+    )
     # First pass filtering
     model = solve_model(
-        freqs, data, filter_center, [1 / filter_half_widths[0]], robust=True, update_weights=update_weights, **basis_options
+        freqs,
+        data,
+        filter_center,
+        [1 / filter_half_widths[0]],
+        robust=True,
+        update_weights=update_weights,
+        **basis_options,
     )
     outliers = identify_outliers(data, model, nsig=wide_nsig)
     model_wgts = combine_weights(outliers)
@@ -287,8 +301,8 @@ def flag_data(
 
         if update_weights:
             new_wgts = combine_weights(outliers, threshold=combine_weights_threshold)
-            model_wgts = (~model_wgts.astype(bool))
-            model_wgts |= (~new_wgts.astype(bool))
+            model_wgts = ~model_wgts.astype(bool)
+            model_wgts |= ~new_wgts.astype(bool)
             model_wgts = (~model_wgts).astype(float)
         else:
             model_wgts = combine_weights(outliers, threshold=combine_weights_threshold)
@@ -318,8 +332,8 @@ def flag_data(
 
         if update_weights:
             new_wgts = combine_weights(outliers, threshold=combine_weights_threshold)
-            model_wgts = (~model_wgts.astype(bool))
-            model_wgts |= (~new_wgts.astype(bool))
+            model_wgts = ~model_wgts.astype(bool)
+            model_wgts |= ~new_wgts.astype(bool)
             model_wgts = (~model_wgts).astype(float)
         else:
             model_wgts = combine_weights(outliers, threshold=combine_weights_threshold)
@@ -338,13 +352,17 @@ def flag_data(
             outliers = identify_outliers(res, model, nsig=narrow_nsig)
 
             if update_weights:
-                new_wgts = combine_weights(outliers, threshold=combine_weights_threshold)
-                model_wgts = (~model_wgts.astype(bool))
-                model_wgts |= (~new_wgts.astype(bool))
+                new_wgts = combine_weights(
+                    outliers, threshold=combine_weights_threshold
+                )
+                model_wgts = ~model_wgts.astype(bool)
+                model_wgts |= ~new_wgts.astype(bool)
                 model_wgts = (~model_wgts).astype(float)
 
             else:
-                model_wgts = combine_weights(outliers, threshold=combine_weights_threshold)
+                model_wgts = combine_weights(
+                    outliers, threshold=combine_weights_threshold
+                )
 
     model = solve_model(
         freqs,
