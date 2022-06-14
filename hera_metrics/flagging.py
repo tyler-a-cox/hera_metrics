@@ -10,6 +10,8 @@ from jax.config import config
 
 config.update("jax_enable_x64", True)
 
+dpss_basis_defaults = {"eigenval_cutoff": [1e-3]}
+
 
 def additional_function(**kwargs):
     """
@@ -93,6 +95,9 @@ def solve_model(
         "normal",
         "rayleigh",
     ], f"Distribution {distribution} not supported"
+
+    if len(basis_options) == 0:
+        basis_options = dpss_basis_defaults
 
     # Maybe move this so that we don't have to pass in freqs
     design_mat, nterms = dspec.dpss_operator(
@@ -273,6 +278,10 @@ def flag_data(
     filter_half_widths = np.linspace(
         1 / narrow_filter_width[0], 1 / wide_filter_width[0], niter
     )
+
+    if len(basis_options) == 0:
+        basis_options = dpss_basis_defaults
+
     # First pass filtering
     model = solve_model(
         freqs,
