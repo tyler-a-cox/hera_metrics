@@ -1,9 +1,11 @@
 """
 File for filtering radio frequency interference
 """
+from .utils import *
 
 import numpy as np
 from scipy import stats
+from scipy import optimize
 from hera_filters import dspec
 from jax import numpy as jnp
 from jax.config import config
@@ -11,14 +13,6 @@ from jax.config import config
 config.update("jax_enable_x64", True)
 
 dpss_basis_defaults = {"eigenval_cutoff": [1e-3]}
-
-
-def additional_function(**kwargs):
-    """
-    Here's a docstring
-
-    """
-    pass
 
 
 def load_data(uvdata):
@@ -34,6 +28,21 @@ def load_data(uvdata):
     -------
     data: np.ndarray
         Array of data unpacked from uvdata object
+    """
+    pass
+
+
+def _m_estimators(estimator="huber"):
+    """
+    Uses M-estimators to estimate regression parameters
+    """
+    assert estimator.lower() in ["huber", "arctan", ""]
+    pass
+
+
+def _maximum_correntropy(x):
+    """
+    Uses the maximum correntropy technique to estimate regression parameters
     """
     pass
 
