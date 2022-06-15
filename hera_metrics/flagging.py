@@ -260,6 +260,34 @@ def identify_rfi(
     pass
 
 
+def identify_rfi_waterfall(
+    freqs,
+    data,
+    narrow_filter_width=[1 / 70e6],
+    wide_filter_width=[1 / 10e6],
+    narrow_nsig=5,
+    wide_nsig=5,
+    incoherent_average=False,
+    estimate_noise=False,
+    niter=2,
+    robust_second_pass=False,
+    update_weights=True,
+    combine_weights_threshold=0.8,
+    **basis_options,
+):
+    """
+    Same identify_rfi, but works on an individual waterfall
+    """
+    pass
+
+
+def combine_waterfall_flags(waterfall_flags):
+    """
+    Combines a set weights of 2D waterfall plots to create a set of shared flags
+    """
+    pass
+
+
 def flag_data(
     freqs,
     data,
