@@ -5,6 +5,4 @@ prolate spheroidal sequences (DPSS).
 
 ## Flagging Radio Frequency Interference
 
-A major problem in the field of 21cm cosmology is radio frequency interference (RFI).
-
-Here we include methods for flagging radio frequency interference
+Here we include methods for flagging radio frequency interference by fitting DPSS vectors using robust regression techniques.

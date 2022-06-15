@@ -238,6 +238,28 @@ def combine_weights(wgts, axis=0, method="mean", threshold=0.9):
     return combined_wgts
 
 
+def identify_rfi(
+    freqs,
+    data,
+    narrow_filter_width=[1 / 70e6],
+    wide_filter_width=[1 / 10e6],
+    narrow_nsig=5,
+    wide_nsig=5,
+    incoherent_average=False,
+    estimate_noise=False,
+    niter=2,
+    robust_second_pass=False,
+    update_weights=True,
+    combine_weights_threshold=0.8,
+    **basis_options,
+):
+    """
+    Make a general function for flagging RFI which uses 
+    """
+    assert method.lower() in ["m-estimator", "rewsle", "maximum-correntropy"]
+    pass
+
+
 def flag_data(
     freqs,
     data,
