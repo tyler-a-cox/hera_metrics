@@ -256,7 +256,11 @@ def identify_rfi(
     """
     Make a general function for flagging RFI which uses 
     """
-    assert method.lower() in ["m-estimator", "rewsle", "maximum-correntropy"]
+    assert method.lower() in [
+        "m-estimator",
+        "rewsle",
+        "maximum-correntropy",
+    ], "Method not defined"
     pass
 
 
@@ -286,6 +290,30 @@ def combine_waterfall_flags(waterfall_flags):
     Combines a set weights of 2D waterfall plots to create a set of shared flags
     """
     pass
+
+
+def estimate_weights(data, nsig=20):
+    """
+    Parameters:
+    ----------
+    data: np.ndarray
+        Data
+    nsig: float
+        Number of sigma to flag outliers
+
+    Returns:
+    -------
+    weights: 
+    """
+    sigma = (
+        np.median(
+            np.abs(data - np.median(data, axis=1, keepdims=True)), axis=1, keepdims=True
+        )
+        / 0.675
+    )
+    mod_zscore = data / sigma
+    weights = np.nanmedian(np.abs(mod_zscore) < cutoff, axis=0)
+    return weights
 
 
 def flag_data(
