@@ -329,6 +329,7 @@ def flag_data(
     robust_second_pass=False,
     update_weights=True,
     combine_weights_threshold=0.8,
+    wgts=None,
     **basis_options,
 ):
     """
@@ -377,6 +378,7 @@ def flag_data(
         [1 / filter_half_widths[0]],
         robust=True,
         update_weights=update_weights,
+        wgts=wgts,
         **basis_options,
     )
     outliers = identify_outliers(data, model, nsig=wide_nsig)
