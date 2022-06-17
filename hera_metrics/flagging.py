@@ -16,38 +16,6 @@ dpss_basis_defaults = {"eigenval_cutoff": [1e-3]}
 stats_distributions = {"gaussian": stats.norm.cdf, "rayleigh": stats.rayleigh.cdf}
 
 
-def load_data(uvdata):
-    """
-    Reformat data into a bls x time x frequency array
-
-    Parameters:
-    ---------
-    uvdata: UVData object
-        pass
-
-    Returns:
-    -------
-    data: np.ndarray
-        Array of data unpacked from uvdata object
-    """
-    pass
-
-
-def _m_estimators(estimator="huber"):
-    """
-    Uses M-estimators to estimate regression parameters
-    """
-    assert estimator.lower() in ["huber", "arctan", ""]
-    pass
-
-
-def _maximum_correntropy(x):
-    """
-    Uses the maximum correntropy technique to estimate regression parameters
-    """
-    pass
-
-
 def solve_model(
     freqs,
     data,
@@ -341,12 +309,6 @@ def flag_time_integration(
     model_wgts: np.ndarray
         Weights applied to data
     """
-    assert method.lower() in [
-        "m-estimator",
-        "rewlse",
-        "maximum-correntropy",
-    ], "Method not defined"
-
     filter_center = [0]
     filter_half_widths = np.linspace(
         1 / narrow_filter_width[0], 1 / wide_filter_width[0], niter
@@ -507,7 +469,7 @@ def flag_data(
     model_wgts: np.ndarray
         Weights applied to data
     """
-    data, freqs, times = load_data(uvdata)
+    data, freqs, _ = load_data(uvdata)
     cache = {}
     flags, models = [], []
 
@@ -524,6 +486,7 @@ def flag_data(
             robust_second_pass=robust_second_pass,
             incoherent_average=incoherent_average,
             update_weights=update_weights,
+            combine_weights_threshold=combine_weights_threshold,
         )
         flags.append(wgts)
         models.append(model)
