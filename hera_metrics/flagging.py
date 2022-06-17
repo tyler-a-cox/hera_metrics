@@ -403,7 +403,7 @@ def flag_time_integration(
             **basis_options,
         )
         res = np.abs(model - data)
-        res[~model_wgts.astype(bool)] = np.nan
+        res[:, ~model_wgts.astype(bool)] = np.nan
         noise = np.nanmedian(res, axis=1, keepdims=True)
         res = res / noise
         res = np.nanmedian(res, axis=0, keepdims=True)
