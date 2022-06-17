@@ -343,7 +343,7 @@ def flag_time_integration(
     """
     assert method.lower() in [
         "m-estimator",
-        "rewsle",
+        "rewlse",
         "maximum-correntropy",
     ], "Method not defined"
 
