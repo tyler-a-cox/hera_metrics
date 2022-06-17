@@ -2,7 +2,7 @@
 File for filtering radio frequency interference
 """
 from .utils import *
-
+import tqdm
 import numpy as np
 from scipy import stats
 from scipy import optimize
@@ -312,11 +312,11 @@ def estimate_weights(data, nsig=20):
         / 0.675
     )
     mod_zscore = data / sigma
-    weights = np.nanmedian(np.abs(mod_zscore) < cutoff, axis=0)
+    weights = np.nanmedian(np.abs(mod_zscore) < nsig, axis=0)
     return weights
 
 
-def flag_data(
+def flag_time_integration(
     freqs,
     data,
     narrow_filter_width=[1 / 70e6],
@@ -473,3 +473,74 @@ def flag_data(
         **basis_options,
     )
     return model, model_wgts
+
+
+def flag_data(
+    uvdata,
+    narrow_filter_width=[1 / 70e6],
+    wide_filter_width=[1 / 10e6],
+    narrow_nsig=5,
+    wide_nsig=5,
+    incoherent_average=False,
+    estimate_noise=False,
+    niter=2,
+    robust_second_pass=False,
+    update_weights=True,
+    combine_weights_threshold=0.8,
+    wgts=None,
+    **basis_options,
+):
+    """
+    Parameters:
+    ----------
+    files:
+        Files to read in
+    narrow_filter_width:
+        Filter width of first pass narrow filter
+    wide_filter_width:
+        Filter width of second pass wide filter. Should at least be as wide as your longest baseline
+    narrow_nsig: float
+        Number of standard deviations to flag outliers at in the first pass step
+    wide_nsig: float
+        Number of standard deviations to flag outliers at in the second step
+    incoherent_average: bool, default=False
+        Average data incoherently after the wide filter width filtering stage. Seeks to identify residual
+        RFI at or below the noise level.
+    estimate_noise: bool, default=False
+        Use auto correlations to estimate the noise level
+    niter: int, default=2
+        Number of iterations to attempt to remove RFI. Future parameter that may or may not be used
+    robust_second_pass: bool, default=False,
+        Whether or not to robustly flag after the first step
+    update_weights: bool, default=False
+        Update weights after each iteration. Otherwise, replace weights with new iteration
+
+    Returns:
+    -------
+    model: np.ndarray
+        Model of the data
+    model_wgts: np.ndarray
+        Weights applied to data
+    """
+    data, freqs, times = load_data(uvdata)
+    cache = {}
+    flags, models = [], []
+
+    for i in tqdm.tqdm(range(data.shape[1])):
+        model, wgts = flag_time_integration(
+            freqs,
+            data[:, i, :],
+            narrow_filter_width=narrow_filter_width,
+            wide_filter_width=wide_filter_width,
+            cache=cache,
+            narrow_nsig=narrow_nsig,
+            wide_nsig=wide_nsig,
+            niter=niter,
+            robust_second_pass=robust_second_pass,
+            incoherent_average=incoherent_average,
+            update_weights=update_weights,
+        )
+        flags.append(wgts)
+        models.append(model)
+
+    return flags, models
