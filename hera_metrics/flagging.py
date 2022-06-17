@@ -13,6 +13,7 @@ from jax.config import config
 config.update("jax_enable_x64", True)
 
 dpss_basis_defaults = {"eigenval_cutoff": [1e-3]}
+stats_distributions = {"gaussian": stats.norm.cdf, "rayleigh": stats.rayleigh.cdf}
 
 
 def load_data(uvdata):
@@ -238,32 +239,6 @@ def combine_weights(wgts, axis=0, method="mean", threshold=0.9):
     return combined_wgts
 
 
-def identify_rfi(
-    freqs,
-    data,
-    narrow_filter_width=[1 / 70e6],
-    wide_filter_width=[1 / 10e6],
-    narrow_nsig=5,
-    wide_nsig=5,
-    incoherent_average=False,
-    estimate_noise=False,
-    niter=2,
-    robust_second_pass=False,
-    update_weights=True,
-    combine_weights_threshold=0.8,
-    **basis_options,
-):
-    """
-    Make a general function for flagging RFI which uses 
-    """
-    assert method.lower() in [
-        "m-estimator",
-        "rewsle",
-        "maximum-correntropy",
-    ], "Method not defined"
-    pass
-
-
 def identify_rfi_waterfall(
     freqs,
     data,
@@ -330,6 +305,7 @@ def flag_time_integration(
     update_weights=True,
     combine_weights_threshold=0.8,
     wgts=None,
+    method="rewlse",
     **basis_options,
 ):
     """
@@ -354,6 +330,9 @@ def flag_time_integration(
         Whether or not to robustly flag after the first step
     update_weights: bool, default=False
         Update weights after each iteration. Otherwise, replace weights with new iteration
+    update_weights_threshold: float, default=0.8
+    method: str, default='rewlse'
+        Robust regression method used to fit DPSS matrix to data
 
     Returns:
     -------
@@ -362,6 +341,12 @@ def flag_time_integration(
     model_wgts: np.ndarray
         Weights applied to data
     """
+    assert method.lower() in [
+        "m-estimator",
+        "rewsle",
+        "maximum-correntropy",
+    ], "Method not defined"
+
     filter_center = [0]
     filter_half_widths = np.linspace(
         1 / narrow_filter_width[0], 1 / wide_filter_width[0], niter
@@ -417,8 +402,9 @@ def flag_time_integration(
             update_weights=update_weights,
             **basis_options,
         )
-        res = np.abs(model - data) * model_wgts
-        noise = np.median(res, axis=1, keepdims=True)
+        res = np.abs(model - data)
+        res[~model_wgts.astype(bool)] = np.nan
+        noise = np.nanmedian(res, axis=1, keepdims=True)
         res = res / noise
         res = np.nanmedian(res, axis=0, keepdims=True)
 
