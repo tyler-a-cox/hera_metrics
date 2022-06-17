@@ -332,7 +332,7 @@ def flag_time_integration(
         Update weights after each iteration. Otherwise, replace weights with new iteration
     update_weights_threshold: float, default=0.8
     method: str, default='rewlse'
-        Robust regression method used to fit DPSS matrix to data
+        Robust regression method used to fit DPSS matrix
 
     Returns:
     -------
@@ -402,9 +402,8 @@ def flag_time_integration(
             update_weights=update_weights,
             **basis_options,
         )
-        res = np.abs(model - data)
-        res[:, ~model_wgts.astype(bool)] = np.nan
-        noise = np.nanmedian(res, axis=1, keepdims=True)
+        res = np.abs(model - data) * model_wgts
+        noise = np.median(res, axis=1, keepdims=True)
         res = res / noise
         res = np.nanmedian(res, axis=0, keepdims=True)
 
