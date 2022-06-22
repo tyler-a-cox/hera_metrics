@@ -1,5 +1,4 @@
 import numpy as np
-import pylab as plt
 
 
 def within(val, bounds):
@@ -69,7 +68,7 @@ class AntennaClassification:
         return k in self.bad
 
 
-def classify_antennas(autos, CEN_FREQ=136e6, RFI_THRESH=1e-2):
+def classify_antennas(autos, freqs, CEN_FREQ=136e6, RFI_THRESH=1e-2):
     """
     """
     pwr_bound = Bounds(absolute=(1, 50), good=(5, 20))
@@ -81,8 +80,8 @@ def classify_antennas(autos, CEN_FREQ=136e6, RFI_THRESH=1e-2):
 
     for k, v in autos.items():
         mean = np.mean(v, axis=0) / intcnt
-        hi_pwr = np.median(mean[hc.freqs > CEN_FREQ])
-        lo_pwr = np.median(mean[hc.freqs <= CEN_FREQ])
+        hi_pwr = np.median(mean[freqs > CEN_FREQ])
+        lo_pwr = np.median(mean[freqs <= CEN_FREQ])
         pwr = 0.5 * (hi_pwr + lo_pwr)
         slope = (hi_pwr - lo_pwr) / pwr
         rfi = np.abs(mean[1:-1] - 0.5 * (mean[:-2] + mean[2:])) / mean[1:-1]
