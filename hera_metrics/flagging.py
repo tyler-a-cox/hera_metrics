@@ -17,6 +17,53 @@ dpss_basis_defaults = {"eigenval_cutoff": [1e-3]}
 stats_distributions = {"gaussian": stats.norm.cdf, "rayleigh": stats.rayleigh.cdf}
 
 
+def _weight_function(res, c=4.685):
+    """
+    """
+    wgts = np.zeros_like(res)
+    mask = np.abs(res) < c
+    wgts[mask] = (1 - (res[mask] / c) ** 2) ** 3
+    return wgts
+
+
+def _modified_zscore(res, weights=None, k=None, post=False):
+    """
+    """
+    res = np.abs(res)
+
+    # Compute median absolute deviation
+    if not post:
+        sigma = np.median(np.abs(res - np.median(res))) * 0.675
+
+    else:
+        sigma = np.sum(np.sqrt(weights * res ** 2 / res.shape[0] / k))
+
+    return np.abs(res - np.median(res)) / sigma
+
+
+def _solve(design_mat, data, wgts):
+    """
+    """
+    XTX = jnp.einsum("ij,i,il->lj", design_mat, wgts, design_mat, optimize=True)
+    XTWy = jnp.einsum("ij,ki->jk", design_mat, wgts * data, optimize=True)
+    model_comps = jnp.linalg.solve(XTX, XTWy)
+    model = jnp.einsum("ij,jk->ki", design_mat, model_comps, optimize=True)
+    return model
+
+
+def _mm_estimators(
+    freqs,
+    data,
+    filter_centers,
+    filter_half_widths,
+    model=None,
+    combine_wgts_method="mean",
+    **basis_options,
+):
+    """
+    """
+
+
 def solve_model(
     freqs,
     data,
