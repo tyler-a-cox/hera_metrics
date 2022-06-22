@@ -69,16 +69,15 @@ class AntennaClassification:
         return k in self.bad
 
 
-def classify_antennas(CEN_FREQ=136e6, RFI_THRESH=1e-2):
+def classify_antennas(autos, CEN_FREQ=136e6, RFI_THRESH=1e-2):
     """
     """
-    # First-pass antenna classification based on auto levels
-    CEN_FREQ = 136e6  # Hz
-    RFI_THRESH = 1e-2  # fraction of mean
-
     pwr_bound = Bounds(absolute=(1, 50), good=(5, 20))
     slope_bound = Bounds(absolute=(-0.2, 0.2), good=(-0.12, 0.12))
     rfi_bound = Bounds(absolute=(0, 0.15), good=(0, 0.1))
+
+    # Fix this
+    intcnt = 1e6
 
     for k, v in autos.items():
         mean = np.mean(v, axis=0) / intcnt

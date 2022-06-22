@@ -2,6 +2,7 @@
 File for filtering radio frequency interference
 """
 from .utils import *
+from .io import load_data
 import tqdm
 import numpy as np
 from scipy import stats
